@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Tendons - Suivi Kiné</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header id="app-header">
+      <h1>Tendons</h1>
+      <p class="subtitle">Tendinopathie — Plan de récupération</p>
+    </header>
+
+    <!-- Navigation tabs -->
+    <nav id="tabs">
+      <button class="tab active" data-view="dashboard">Plan</button>
+      <button class="tab" data-view="session">Séance</button>
+      <button class="tab" data-view="history">Historique</button>
+    </nav>
+
+    <!-- ===================== DASHBOARD VIEW ===================== -->
+    <section id="view-dashboard" class="view active">
+      <div class="day-grid" id="day-grid"></div>
+
+      <div class="card rules-card">
+        <h3>Règles de sécurité</h3>
+        <ul>
+          <li>Douleur pendant exercice ≤ 3/10</li>
+          <li>Pas pire le lendemain matin</li>
+          <li>Si aggravation → réduire volume ou amplitude</li>
+        </ul>
+      </div>
+
+      <div class="card" id="running-card" style="display:none">
+        <h3>Reprise course</h3>
+        <p>Seulement si douleur faible et exercices bien tolérés.</p>
+        <p>10-15 min, allure lente, chaussures avec drop.</p>
+      </div>
+    </section>
+
+    <!-- ===================== SESSION VIEW ===================== -->
+    <section id="view-session" class="view">
+      <!-- Exercise picker -->
+      <div id="exercise-picker">
+        <h2>Choisir un exercice</h2>
+        <div id="exercise-list"></div>
+      </div>
+
+      <!-- Exercise execution -->
+      <div id="exercise-runner" style="display:none">
+        <button id="btn-back-picker" class="btn-back">← Retour</button>
+
+        <div class="exercise-header">
+          <h2 id="runner-title"></h2>
+          <p id="runner-subtitle" class="subtitle"></p>
+        </div>
+
+        <div id="runner-instructions" class="card"></div>
+
+        <!-- Progress indicator -->
+        <div id="runner-progress">
+          <span id="progress-label"></span>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+
+        <!-- Timer circle -->
+        <div id="timer-container" style="display:none">
+          <div class="timer-circle">
+            <svg viewBox="0 0 120 120">
+              <circle class="timer-bg" cx="60" cy="60" r="54"/>
+              <circle class="timer-ring" id="timer-ring" cx="60" cy="60" r="54"/>
+            </svg>
+            <div class="timer-text">
+              <span id="timer-display">0</span>
+              <span id="timer-label" class="timer-sub"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Countdown overlay (3-2-1) -->
+        <div id="countdown-overlay" style="display:none">
+          <span id="countdown-number"></span>
+        </div>
+
+        <!-- Action buttons -->
+        <div id="runner-actions">
+          <button id="btn-start" class="btn btn-primary btn-large">Commencer</button>
+          <button id="btn-pause" class="btn btn-secondary" style="display:none">Pause</button>
+          <button id="btn-resume" class="btn btn-primary" style="display:none">Reprendre</button>
+          <button id="btn-next" class="btn btn-primary" style="display:none">Suivant</button>
+          <button id="btn-done" class="btn btn-success" style="display:none">Terminer</button>
+        </div>
+
+        <!-- Pain rating after exercise -->
+        <div id="pain-rating" style="display:none">
+          <h3>Niveau de douleur ressenti</h3>
+          <div class="pain-scale" id="pain-scale"></div>
+          <p id="pain-description" class="subtitle"></p>
+          <button id="btn-save-pain" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== HISTORY VIEW ===================== -->
+    <section id="view-history" class="view">
+      <h2>Historique des séances</h2>
+      <div id="history-list"></div>
+      <div id="history-empty" class="card" style="display:none">
+        <p>Aucune séance enregistrée. Lance ta première séance !</p>
+      </div>
+      <button id="btn-reset" class="btn btn-danger btn-small">Réinitialiser les données</button>
+    </section>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/exercises.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
