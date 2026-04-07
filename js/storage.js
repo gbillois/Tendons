@@ -66,9 +66,30 @@ const Storage = (() => {
     return start.toISOString().slice(0, 10);
   }
 
+  function setDayDone(dayNum, done) {
+    const data = load();
+    if (!data.manualDone) data.manualDone = [];
+    if (done) {
+      if (!data.manualDone.includes(dayNum)) data.manualDone.push(dayNum);
+    } else {
+      data.manualDone = data.manualDone.filter(d => d !== dayNum);
+    }
+    save(data);
+  }
+
+  function isDayManuallyDone(dayNum) {
+    return (load().manualDone || []).includes(dayNum);
+  }
+
+  function setStartDate(dateStr) {
+    const data = load();
+    data.startDate = dateStr;
+    save(data);
+  }
+
   function reset() {
     localStorage.removeItem(KEY);
   }
 
-  return { load, save, addSession, getSessions, getStartDate, getCurrentDay, getSessionCountForDate, getDateForDay, reset };
+  return { load, save, addSession, getSessions, getStartDate, setStartDate, getCurrentDay, getSessionCountForDate, getDateForDay, setDayDone, isDayManuallyDone, reset };
 })();

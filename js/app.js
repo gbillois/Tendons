@@ -46,6 +46,11 @@
   const historyEmpty = $('history-empty');
   const btnReset = $('btn-reset');
 
+  // Settings
+  const settingsDaysList = $('settings-days-list');
+  const settingsStartDate = $('settings-start-date');
+  const btnSaveDate = $('btn-save-date');
+
   // ===================== STATE =====================
   let currentExercise = null;
   let currentVariant = null;
@@ -53,6 +58,7 @@
   let currentRep = 0;
   let phase = 'idle'; // idle | countdown | hold | descent | rest | repWait | done
   let selectedPain = null;
+  let selectedDay = null; // null = use currentDay
 
   // ===================== NAVIGATION =====================
   tabs.forEach(tab => {
@@ -63,10 +69,24 @@
       if (target === 'dashboard') renderDashboard();
       if (target === 'session') renderExercisePicker();
       if (target === 'history') renderHistory();
+      if (target === 'settings') renderSettings();
     });
   });
 
+  function switchToSession(dayNum) {
+    selectedDay = dayNum;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.view === 'session'));
+    views.forEach(v => v.classList.toggle('active', v.id === 'view-session'));
+    renderExercisePicker();
+  }
+
   // ===================== DASHBOARD =====================
+  function isDayCompleted(dp) {
+    if (Storage.isDayManuallyDone(dp.day)) return true;
+    const dateStr = Storage.getDateForDay(dp.day);
+    return Storage.getSessionCountForDate(dateStr) >= dp.maxSessions;
+  }
+
   function renderDashboard() {
     const currentDay = Storage.getCurrentDay();
     dayGrid.innerHTML = '';
@@ -75,11 +95,10 @@
       const dateStr = Storage.getDateForDay(dp.day);
       const sessionsToday = Storage.getSessionCountForDate(dateStr);
       const isToday = dp.day === currentDay;
-      const isCompleted = sessionsToday >= dp.maxSessions;
-      const isPast = dp.day < currentDay;
+      const isCompleted = isDayCompleted(dp);
 
       const card = document.createElement('div');
-      card.className = 'day-card' + (isToday ? ' today' : '') + ((isCompleted || isPast && sessionsToday > 0) ? ' completed' : '');
+      card.className = 'day-card clickable' + (isToday ? ' today' : '') + (isCompleted ? ' completed' : '');
 
       let dotsHtml = '';
       for (let i = 0; i < dp.maxSessions; i++) {
@@ -87,9 +106,10 @@
       }
 
       const exerciseNames = dp.exercises.map(id => Exercises.getById(id).name).join(', ');
+      const dayNumContent = isCompleted ? '✓' : dp.day;
 
       card.innerHTML = `
-        <div class="day-number">${dp.day}</div>
+        <div class="day-number">${dayNumContent}</div>
         <div class="day-info">
           <h3>${dp.label}</h3>
           <p>${dp.description}</p>
@@ -97,6 +117,8 @@
         </div>
         <div class="day-sessions">${dotsHtml}</div>
       `;
+
+      card.addEventListener('click', () => switchToSession(dp.day));
       dayGrid.appendChild(card);
     });
 
@@ -113,7 +135,11 @@
     exerciseList.innerHTML = '';
 
     const currentDay = Storage.getCurrentDay();
-    const plan = Exercises.getDayPlan(currentDay);
+    const day = selectedDay || currentDay;
+    const plan = Exercises.getDayPlan(day);
+
+    const pickerTitle = exercisePicker.querySelector('h2');
+    pickerTitle.textContent = `Séance — Jour ${day}`;
 
     plan.exercises.forEach(exId => {
       const ex = Exercises.getById(exId);
@@ -518,10 +544,66 @@
     });
   }
 
+  // ===================== SETTINGS =====================
+  function renderSettings() {
+    // Start date
+    settingsStartDate.value = Storage.getStartDate();
+
+    // Days list
+    settingsDaysList.innerHTML = '';
+    Exercises.dayPlan.forEach(dp => {
+      const manualDone = Storage.isDayManuallyDone(dp.day);
+      const dateStr = Storage.getDateForDay(dp.day);
+      const sessionCount = Storage.getSessionCountForDate(dateStr);
+      const autoDone = sessionCount >= dp.maxSessions;
+      const isDone = manualDone || autoDone;
+
+      const exerciseNames = dp.exercises.map(id => Exercises.getById(id).name).join(', ');
+
+      const row = document.createElement('div');
+      row.className = 'settings-day-row' + (isDone ? ' done' : '');
+
+      row.innerHTML = `
+        <div class="settings-day-info">
+          <span class="settings-day-num">${isDone ? '✓' : dp.day}</span>
+          <div>
+            <div class="settings-day-label">${dp.label}</div>
+            <div class="settings-day-exercises">${exerciseNames}</div>
+            ${sessionCount > 0 ? `<div class="settings-day-sessions">${sessionCount} séance(s) enregistrée(s)</div>` : ''}
+          </div>
+        </div>
+        <button class="btn btn-small ${isDone ? 'btn-done-active' : 'btn-done-inactive'}" data-day="${dp.day}" data-done="${isDone}">
+          ${isDone ? 'Fait ✓' : 'Marquer fait'}
+        </button>
+      `;
+
+      row.querySelector('button').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        const dayNum = parseInt(btn.dataset.day);
+        const currentlyDone = btn.dataset.done === 'true';
+        // Toggle manual done (only if not auto-done from sessions)
+        Storage.setDayDone(dayNum, !currentlyDone);
+        renderSettings();
+        renderDashboard();
+      });
+
+      settingsDaysList.appendChild(row);
+    });
+  }
+
+  btnSaveDate.addEventListener('click', () => {
+    const val = settingsStartDate.value;
+    if (!val) return;
+    Storage.setStartDate(val);
+    renderSettings();
+    renderDashboard();
+  });
+
   // ===================== RESET =====================
   btnReset.addEventListener('click', () => {
     if (confirm('Supprimer toutes les données ? Cette action est irréversible.')) {
       Storage.reset();
+      selectedDay = null;
       renderHistory();
       renderDashboard();
     }
