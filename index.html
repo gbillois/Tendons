@@ -19,6 +19,7 @@
       <button class="tab active" data-view="dashboard">Plan</button>
       <button class="tab" data-view="session">Séance</button>
       <button class="tab" data-view="history">Historique</button>
+      <button class="tab" data-view="settings">Réglages</button>
     </nav>
 
     <!-- ===================== DASHBOARD VIEW ===================== -->
@@ -112,6 +113,26 @@
         <p>Aucune séance enregistrée. Lance ta première séance !</p>
       </div>
       <button id="btn-reset" class="btn btn-danger btn-small">Réinitialiser les données</button>
+    </section>
+
+    <!-- ===================== SETTINGS VIEW ===================== -->
+    <section id="view-settings" class="view">
+      <h2>Réglages</h2>
+
+      <div class="card settings-section">
+        <h3>Date de début du programme</h3>
+        <div class="settings-row">
+          <input type="date" id="settings-start-date" class="date-input">
+          <button id="btn-save-date" class="btn btn-primary btn-small">Enregistrer</button>
+        </div>
+        <p class="settings-hint">Modifie si la date de début est incorrecte.</p>
+      </div>
+
+      <div class="card settings-section">
+        <h3>État des jours</h3>
+        <p class="settings-hint">Coche manuellement les jours complétés si tu as perdu tes données.</p>
+        <div id="settings-days-list"></div>
+      </div>
     </section>
   </div>
 

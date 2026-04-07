@@ -108,6 +108,16 @@ body {
   gap: 14px;
   transition: border-color 0.2s;
 }
+.day-card.clickable {
+  cursor: pointer;
+}
+.day-card.clickable:hover {
+  border-color: var(--primary-dim);
+  background: var(--surface2);
+}
+.day-card.clickable:active {
+  transform: scale(0.98);
+}
 .day-card.today {
   border-color: var(--primary);
   box-shadow: 0 0 0 1px var(--primary-dim);
@@ -469,6 +479,112 @@ body {
   background: var(--primary);
   border-color: var(--primary);
   color: #fff;
+}
+
+/* ========== SETTINGS VIEW ========== */
+#view-settings h2 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+}
+.settings-section h3 {
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.settings-hint {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+.settings-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.date-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+.date-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+#settings-days-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.settings-day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s;
+}
+.settings-day-row.done {
+  border-color: var(--success);
+}
+.settings-day-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.settings-day-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  background: var(--surface);
+  color: var(--text-dim);
+}
+.settings-day-row.done .settings-day-num {
+  background: var(--success-dim);
+  color: var(--success);
+}
+.settings-day-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.settings-day-exercises {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.settings-day-sessions {
+  font-size: 0.72rem;
+  color: var(--success);
+  margin-top: 2px;
+}
+.btn-done-active {
+  background: var(--success-dim);
+  color: var(--success);
+  border: 1px solid var(--success);
+  font-size: 0.8rem;
+  padding: 8px 14px;
+}
+.btn-done-inactive {
+  background: var(--surface2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  padding: 8px 14px;
 }
 
 /* ========== RESPONSIVE ========== */
