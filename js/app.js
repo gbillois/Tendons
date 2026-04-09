@@ -59,6 +59,7 @@
   let phase = 'idle'; // idle | countdown | hold | descent | rest | repWait | done
   let selectedPain = null;
   let selectedDay = null; // null = use currentDay
+  let currentSessionId = null;
 
   // ===================== NAVIGATION =====================
   tabs.forEach(tab => {
@@ -137,16 +138,32 @@
     const currentDay = Storage.getCurrentDay();
     const day = selectedDay || currentDay;
     const plan = Exercises.getDayPlan(day);
+    const dateStr = Storage.getDateForDay(day);
+
+    // Get or start in-progress session for this day
+    const session = Storage.startOrGetSession(dateStr, day);
+    currentSessionId = session.sessionId;
+
+    // Which exercises have been done in this session?
+    const doneExIds = new Set(
+      Storage.getSessions()
+        .filter(s => s.sessionId === currentSessionId)
+        .map(s => s.exerciseId)
+    );
 
     const pickerTitle = exercisePicker.querySelector('h2');
     pickerTitle.textContent = `Séance — Jour ${day}`;
 
     plan.exercises.forEach(exId => {
       const ex = Exercises.getById(exId);
+      const isDone = doneExIds.has(exId);
       const card = document.createElement('div');
-      card.className = 'exercise-card';
+      card.className = 'exercise-card' + (isDone ? ' ex-done' : '');
       card.innerHTML = `
-        <span class="ex-tag ${ex.tag}">${ex.tagLabel}</span>
+        <div class="ex-card-header">
+          <span class="ex-tag ${ex.tag}">${ex.tagLabel}</span>
+          ${isDone ? '<span class="ex-check">✓</span>' : ''}
+        </div>
         <h3>${ex.name}</h3>
         <p>${ex.subtitle}</p>
         <div class="ex-dosage">
@@ -157,6 +174,26 @@
       card.addEventListener('click', () => startExercise(ex));
       exerciseList.appendChild(card);
     });
+
+    // Remove old validate button if present
+    const existingValidate = exercisePicker.querySelector('.btn-validate-session');
+    if (existingValidate) existingValidate.remove();
+
+    // Show validate button only when all exercises done
+    const allDone = plan.exercises.every(id => doneExIds.has(id));
+    if (allDone) {
+      const validateBtn = document.createElement('button');
+      validateBtn.className = 'btn btn-success btn-large btn-validate-session';
+      validateBtn.textContent = 'Valider la séance ✓';
+      validateBtn.addEventListener('click', () => {
+        Storage.completeSession(currentSessionId);
+        currentSessionId = null;
+        renderDashboard();
+        tabs.forEach(t => t.classList.toggle('active', t.dataset.view === 'dashboard'));
+        views.forEach(v => v.classList.toggle('active', v.id === 'view-dashboard'));
+      });
+      exerciseList.after(validateBtn);
+    }
   }
 
   // ===================== EXERCISE RUNNER =====================
@@ -474,18 +511,16 @@
       exerciseId: currentExercise.id,
       variant: currentVariant,
       painLevel: selectedPain,
-      date: new Date().toISOString().slice(0, 10)
+      date: new Date().toISOString().slice(0, 10),
+      sessionId: currentSessionId
     });
 
     // Cleanup variant picker
     const vp = document.querySelector('.variant-picker');
     if (vp) vp.remove();
 
-    // Go back to picker
+    // Go back to picker to do remaining exercises
     renderExercisePicker();
-
-    // Flash the tab
-    tabs[0].click(); // back to dashboard
   });
 
   // ===================== HISTORY =====================
@@ -554,8 +589,8 @@
     Exercises.dayPlan.forEach(dp => {
       const manualDone = Storage.isDayManuallyDone(dp.day);
       const dateStr = Storage.getDateForDay(dp.day);
-      const sessionCount = Storage.getSessionCountForDate(dateStr);
-      const autoDone = sessionCount >= dp.maxSessions;
+      const completedSessions = Storage.getCompletedSessionsForDate(dateStr);
+      const autoDone = completedSessions.length >= dp.maxSessions;
       const isDone = manualDone || autoDone;
 
       const exerciseNames = dp.exercises.map(id => Exercises.getById(id).name).join(', ');
@@ -563,26 +598,54 @@
       const row = document.createElement('div');
       row.className = 'settings-day-row' + (isDone ? ' done' : '');
 
-      row.innerHTML = `
-        <div class="settings-day-info">
-          <span class="settings-day-num">${isDone ? '✓' : dp.day}</span>
-          <div>
-            <div class="settings-day-label">${dp.label}</div>
-            <div class="settings-day-exercises">${exerciseNames}</div>
-            ${sessionCount > 0 ? `<div class="settings-day-sessions">${sessionCount} séance(s) enregistrée(s)</div>` : ''}
+      // Build sessions list
+      let sessionsHtml = '';
+      completedSessions.forEach((cs, idx) => {
+        const firstEx = cs.exercises[0];
+        const time = firstEx
+          ? new Date(firstEx.completedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+          : '';
+        sessionsHtml += `
+          <div class="settings-session-row">
+            <span>Séance ${idx + 1}${time ? ` — ${time}` : ''}</span>
+            <button class="btn btn-small btn-session-delete" data-session-id="${cs.sessionId}">Supprimer</button>
           </div>
+        `;
+      });
+
+      row.innerHTML = `
+        <div class="settings-day-header">
+          <div class="settings-day-info">
+            <span class="settings-day-num">${isDone ? '✓' : dp.day}</span>
+            <div>
+              <div class="settings-day-label">${dp.label}</div>
+              <div class="settings-day-exercises">${exerciseNames}</div>
+            </div>
+          </div>
+          <button class="btn btn-small ${manualDone ? 'btn-done-active' : 'btn-done-inactive'}" data-day="${dp.day}" data-manual="${manualDone}">
+            ${manualDone ? 'Manuel ✓' : 'Marquer fait'}
+          </button>
         </div>
-        <button class="btn btn-small ${isDone ? 'btn-done-active' : 'btn-done-inactive'}" data-day="${dp.day}" data-done="${isDone}">
-          ${isDone ? 'Fait ✓' : 'Marquer fait'}
-        </button>
+        ${sessionsHtml ? `<div class="settings-sessions">${sessionsHtml}</div>` : ''}
       `;
 
-      row.querySelector('button').addEventListener('click', (e) => {
+      // Session delete buttons
+      row.querySelectorAll('[data-session-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (confirm('Supprimer cette séance ?')) {
+            Storage.deleteCompletedSession(btn.dataset.sessionId);
+            renderSettings();
+            renderDashboard();
+          }
+        });
+      });
+
+      // Manual done toggle
+      row.querySelector('[data-day]').addEventListener('click', (e) => {
         const btn = e.currentTarget;
         const dayNum = parseInt(btn.dataset.day);
-        const currentlyDone = btn.dataset.done === 'true';
-        // Toggle manual done (only if not auto-done from sessions)
-        Storage.setDayDone(dayNum, !currentlyDone);
+        const isManual = btn.dataset.manual === 'true';
+        Storage.setDayDone(dayNum, !isManual);
         renderSettings();
         renderDashboard();
       });

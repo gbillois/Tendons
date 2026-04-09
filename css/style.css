@@ -194,7 +194,6 @@ body {
   letter-spacing: 0.5px;
   padding: 3px 8px;
   border-radius: 4px;
-  margin-bottom: 8px;
 }
 .ex-tag.iso { background: #1e3a5f; color: #60a5fa; }
 .ex-tag.exc { background: #3b1f1f; color: #f87171; }
@@ -354,7 +353,8 @@ body {
 .btn-primary { background: var(--primary); color: #fff; }
 .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 .btn-success { background: var(--success); color: #000; }
-.btn-danger { background: var(--danger-dim); color: var(--danger); font-size: 0.8rem; padding: 8px 16px; margin-top: 24px; }
+.btn-danger { background: var(--danger-dim); color: var(--danger); font-size: 0.8rem; padding: 8px 16px; }
+#btn-reset { margin-top: 24px; }
 .btn-large { padding: 16px 48px; font-size: 1.1rem; }
 .btn-small { font-size: 0.8rem; padding: 8px 16px; }
 
@@ -524,8 +524,7 @@ body {
 }
 .settings-day-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   padding: 12px;
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -585,6 +584,63 @@ body {
   border: 1px solid var(--border);
   font-size: 0.8rem;
   padding: 8px 14px;
+}
+
+/* ========== EXERCISE PICKER — DONE STATE ========== */
+.ex-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.ex-card-header .ex-tag {
+  margin-bottom: 0;
+}
+.ex-check {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--success);
+}
+.exercise-card.ex-done {
+  opacity: 0.6;
+  border-color: var(--success);
+}
+.btn-validate-session {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+}
+
+/* ========== SETTINGS — SESSION ROWS ========== */
+.settings-day-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+.settings-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.settings-sessions {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.settings-session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.btn-session-delete {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border: none;
+  margin-top: 0;
 }
 
 /* ========== RESPONSIVE ========== */
