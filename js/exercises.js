@@ -12,13 +12,13 @@ const Exercises = (() => {
       subtitle: 'Maintien sur pointe des pieds',
       description: 'Monte sur la pointe des pieds et <strong>tiens la position sans bouger</strong>. Tension modérée, pas de douleur vive.',
       reps: 5,
-      holdSeconds: 25,   // 20-30s, on prend 25 par défaut
+      holdSeconds: 45,
       restSeconds: 30,
       sets: 1,
       hasTimer: true,
       timerType: 'hold',  // hold = maintien statique
       variants: null,
-      dosageText: '5 reps × 25s',
+      dosageText: '5 × 45s',
       frequencyText: '1-2x / jour'
     },
     {
@@ -26,11 +26,11 @@ const Exercises = (() => {
       name: 'Excentrique',
       tag: 'exc',
       tagLabel: 'Traitement',
-      subtitle: 'Descente lente sur un pied',
-      description: 'Monte sur la pointe avec les 2 pieds, passe sur le <strong>pied douloureux</strong>, puis <strong>descends lentement</strong>.',
-      reps: 10,
+      subtitle: 'Montée/descente sur les deux pieds',
+      description: 'Monte et <strong>descends lentement</strong> sur la pointe des pieds, sur les <strong>deux pieds</strong>. Mouvement contrôlé.',
+      reps: 15,
       descentSeconds: 5,
-      restSeconds: 60,    // repos entre séries
+      restSeconds: 30,
       sets: 3,
       hasTimer: true,
       timerType: 'descent',
@@ -38,7 +38,7 @@ const Exercises = (() => {
         { id: 'straight', label: 'Jambe tendue' },
         { id: 'bent', label: 'Genou fléchi' }
       ],
-      dosageText: '3 × 10 reps',
+      dosageText: '3 × 15 reps',
       frequencyText: '1-2x / jour'
     },
     {
