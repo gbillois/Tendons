@@ -11,10 +11,10 @@ const Exercises = (() => {
       tagLabel: 'Antalgique',
       subtitle: 'Maintien sur pointe des pieds',
       description: 'Monte sur la pointe des pieds et <strong>tiens la position sans bouger</strong>. Tension modérée, pas de douleur vive.',
-      reps: 1,
+      reps: 5,
       holdSeconds: 45,
       restSeconds: 30,
-      sets: 5,
+      sets: 1,
       hasTimer: true,
       timerType: 'hold',  // hold = maintien statique
       variants: null,
