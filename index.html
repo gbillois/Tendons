@@ -132,14 +132,125 @@
       </div>
 
       <div class="card settings-section">
+        <h3>Indicateurs sonores</h3>
+        <label class="toggle-row">
+          <input type="checkbox" id="settings-sound">
+          <span>Activer les bips (compte à rebours, fin de série, repos…)</span>
+        </label>
+        <p class="settings-hint">Désactivés par défaut.</p>
+      </div>
+
+      <div class="card settings-section">
+        <h3>Exercices</h3>
+        <p class="settings-hint">Modifie les exercices existants ou crée les tiens. Les nouveaux exercices apparaissent dans la séance, section « Autres exercices ».</p>
+        <div id="settings-exercises-list"></div>
+        <div class="settings-ex-actions">
+          <button id="btn-new-exercise" class="btn btn-primary btn-small">+ Nouvel exercice</button>
+          <button id="btn-export-exercises" class="btn btn-secondary btn-small">Exporter JSON</button>
+          <button id="btn-import-exercises" class="btn btn-secondary btn-small">Importer JSON</button>
+          <button id="btn-reset-exercises" class="btn btn-danger btn-small">Restaurer défauts</button>
+          <input type="file" id="import-exercises-file" accept=".json,application/json" style="display:none">
+        </div>
+      </div>
+
+      <div class="card settings-section">
         <h3>État des jours</h3>
         <p class="settings-hint">Coche manuellement les jours complétés si tu as perdu tes données.</p>
         <div id="settings-days-list"></div>
       </div>
     </section>
+
+    <!-- ===================== EXERCISE EDITOR MODAL ===================== -->
+    <div id="exercise-editor-overlay" style="display:none">
+      <div class="editor-modal">
+        <h3 id="editor-title">Nouvel exercice</h3>
+
+        <div class="editor-field">
+          <label for="ed-name">Nom *</label>
+          <input type="text" id="ed-name" class="ed-input" placeholder="Ex : Squat sur une jambe">
+        </div>
+        <div class="editor-field">
+          <label for="ed-subtitle">Sous-titre</label>
+          <input type="text" id="ed-subtitle" class="ed-input" placeholder="Courte description du mouvement">
+        </div>
+        <div class="editor-field">
+          <label for="ed-description">Instructions</label>
+          <textarea id="ed-description" class="ed-input" rows="3" placeholder="Description détaillée du mouvement"></textarea>
+        </div>
+
+        <div class="editor-row">
+          <div class="editor-field">
+            <label for="ed-tag">Catégorie</label>
+            <select id="ed-tag" class="ed-input">
+              <option value="iso">Bleu (antalgique)</option>
+              <option value="exc">Rouge (traitement)</option>
+              <option value="mob">Vert (complément)</option>
+            </select>
+          </div>
+          <div class="editor-field">
+            <label for="ed-taglabel">Libellé catégorie</label>
+            <input type="text" id="ed-taglabel" class="ed-input" placeholder="Ex : Renforcement">
+          </div>
+        </div>
+
+        <div class="editor-field">
+          <label for="ed-timertype">Type de mouvement</label>
+          <select id="ed-timertype" class="ed-input">
+            <option value="hold">Maintien chronométré</option>
+            <option value="descent">Descente lente chronométrée</option>
+            <option value="manual">Comptage manuel des répétitions</option>
+          </select>
+        </div>
+
+        <div class="editor-row">
+          <div class="editor-field">
+            <label for="ed-sets">Séries</label>
+            <input type="number" id="ed-sets" class="ed-input" min="1" max="50" value="1">
+          </div>
+          <div class="editor-field">
+            <label for="ed-reps">Répétitions</label>
+            <input type="number" id="ed-reps" class="ed-input" min="1" max="500" value="10">
+          </div>
+        </div>
+
+        <div class="editor-row">
+          <div class="editor-field" id="ed-field-hold">
+            <label for="ed-hold">Maintien (s)</label>
+            <input type="number" id="ed-hold" class="ed-input" min="1" max="3600" value="30">
+          </div>
+          <div class="editor-field" id="ed-field-descent">
+            <label for="ed-descent">Descente (s)</label>
+            <input type="number" id="ed-descent" class="ed-input" min="1" max="3600" value="5">
+          </div>
+          <div class="editor-field">
+            <label for="ed-rest">Repos (s)</label>
+            <input type="number" id="ed-rest" class="ed-input" min="0" max="3600" value="30">
+          </div>
+        </div>
+
+        <div class="editor-field">
+          <label for="ed-frequency">Fréquence</label>
+          <input type="text" id="ed-frequency" class="ed-input" placeholder="Ex : 1-2x / jour">
+        </div>
+        <div class="editor-field">
+          <label for="ed-variants">Variantes (séparées par des virgules, optionnel)</label>
+          <input type="text" id="ed-variants" class="ed-input" placeholder="Ex : Jambe tendue, Genou fléchi">
+        </div>
+
+        <p id="editor-error" class="editor-error" style="display:none"></p>
+
+        <div class="editor-actions">
+          <button id="btn-editor-save" class="btn btn-primary">Enregistrer</button>
+          <button id="btn-editor-cancel" class="btn btn-secondary">Annuler</button>
+          <button id="btn-editor-delete" class="btn btn-danger" style="display:none">Supprimer</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="js/storage.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/wakelock.js"></script>
   <script src="js/exercises.js"></script>
   <script src="js/timer.js"></script>
   <script src="js/app.js"></script>
