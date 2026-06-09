@@ -50,6 +50,36 @@
   const settingsDaysList = $('settings-days-list');
   const settingsStartDate = $('settings-start-date');
   const btnSaveDate = $('btn-save-date');
+  const settingsSound = $('settings-sound');
+  const settingsExList = $('settings-exercises-list');
+  const btnNewExercise = $('btn-new-exercise');
+  const btnExportExercises = $('btn-export-exercises');
+  const btnImportExercises = $('btn-import-exercises');
+  const btnResetExercises = $('btn-reset-exercises');
+  const importExercisesFile = $('import-exercises-file');
+
+  // Exercise editor modal
+  const editorOverlay = $('exercise-editor-overlay');
+  const editorTitle = $('editor-title');
+  const edName = $('ed-name');
+  const edSubtitle = $('ed-subtitle');
+  const edDescription = $('ed-description');
+  const edTag = $('ed-tag');
+  const edTagLabel = $('ed-taglabel');
+  const edTimerType = $('ed-timertype');
+  const edSets = $('ed-sets');
+  const edReps = $('ed-reps');
+  const edHold = $('ed-hold');
+  const edDescent = $('ed-descent');
+  const edRest = $('ed-rest');
+  const edFieldHold = $('ed-field-hold');
+  const edFieldDescent = $('ed-field-descent');
+  const edFrequency = $('ed-frequency');
+  const edVariants = $('ed-variants');
+  const editorError = $('editor-error');
+  const btnEditorSave = $('btn-editor-save');
+  const btnEditorCancel = $('btn-editor-cancel');
+  const btnEditorDelete = $('btn-editor-delete');
 
   // ===================== STATE =====================
   let currentExercise = null;
@@ -106,7 +136,10 @@
         dotsHtml += `<div class="session-dot${i < sessionsToday ? ' done' : ''}"></div>`;
       }
 
-      const exerciseNames = dp.exercises.map(id => Exercises.getById(id).name).join(', ');
+      const exerciseNames = dp.exercises.map(id => {
+        const ex = Exercises.getById(id);
+        return ex ? ex.name : id;
+      }).join(', ');
       const dayNumContent = isCompleted ? '✓' : dp.day;
 
       card.innerHTML = `
@@ -132,6 +165,7 @@
     exercisePicker.style.display = 'block';
     exerciseRunner.style.display = 'none';
     Timer.stop();
+    WakeLock.disable();
     phase = 'idle';
     exerciseList.innerHTML = '';
 
@@ -154,9 +188,7 @@
     const pickerTitle = exercisePicker.querySelector('h2');
     pickerTitle.textContent = `Séance — Jour ${day}`;
 
-    plan.exercises.forEach(exId => {
-      const ex = Exercises.getById(exId);
-      const isDone = doneExIds.has(exId);
+    function buildExerciseCard(ex, isDone) {
       const card = document.createElement('div');
       card.className = 'exercise-card' + (isDone ? ' ex-done' : '');
       card.innerHTML = `
@@ -172,8 +204,26 @@
         </div>
       `;
       card.addEventListener('click', () => startExercise(ex));
-      exerciseList.appendChild(card);
+      return card;
+    }
+
+    plan.exercises.forEach(exId => {
+      const ex = Exercises.getById(exId);
+      if (!ex) return;
+      exerciseList.appendChild(buildExerciseCard(ex, doneExIds.has(exId)));
     });
+
+    // Optional exercises not part of the day plan (user-created)
+    const extras = Exercises.getAll().filter(ex => !plan.exercises.includes(ex.id));
+    if (extras.length) {
+      const heading = document.createElement('div');
+      heading.className = 'picker-section-title';
+      heading.textContent = 'Autres exercices';
+      exerciseList.appendChild(heading);
+      extras.forEach(ex => {
+        exerciseList.appendChild(buildExerciseCard(ex, doneExIds.has(ex.id)));
+      });
+    }
 
     // Remove old validate button if present
     const existingValidate = exercisePicker.querySelector('.btn-validate-session');
@@ -204,6 +254,8 @@
     currentVariant = null;
     selectedPain = null;
     phase = 'idle';
+
+    WakeLock.enable(); // keep the screen on during the exercise
 
     exercisePicker.style.display = 'none';
     exerciseRunner.style.display = 'block';
@@ -255,6 +307,7 @@
   // ===================== BUTTON HANDLERS =====================
   btnStart.addEventListener('click', () => {
     if (phase === 'idle') {
+      Sound.unlock(); // audio needs a user gesture on mobile
       currentRep = 0;
       nextRep();
     }
@@ -301,6 +354,7 @@
       } else {
         // Exercise complete
         phase = 'done';
+        Sound.complete();
         updateProgress();
         timerContainer.style.display = 'none';
         showButtons('done');
@@ -360,6 +414,7 @@
           startRestTimer(ex.restSeconds, () => nextRep());
         } else {
           phase = 'done';
+          Sound.complete();
           updateProgress();
           timerContainer.style.display = 'none';
           showButtons('done');
@@ -375,6 +430,7 @@
     countdownOverlay.style.display = 'flex';
     let count = 3;
     countdownNumber.textContent = count;
+    Sound.countdownTick();
     showButtons('none');
 
     const cdInterval = setInterval(() => {
@@ -382,9 +438,11 @@
       if (count <= 0) {
         clearInterval(cdInterval);
         countdownOverlay.style.display = 'none';
+        Sound.start();
         callback();
       } else {
         countdownNumber.textContent = count;
+        Sound.countdownTick();
         // Re-trigger animation
         countdownNumber.style.animation = 'none';
         void countdownNumber.offsetWidth;
@@ -403,7 +461,8 @@
       timerDisplay.textContent = remaining;
       const offset = Timer.getCircumference() * progress;
       timerRing.style.strokeDashoffset = offset;
-    }, onComplete);
+      if (remaining > 0 && remaining <= 3) Sound.tick();
+    }, () => { Sound.phaseEnd(); onComplete(); });
   }
 
   function startDescentTimer(seconds, onComplete) {
@@ -416,7 +475,7 @@
       timerDisplay.textContent = remaining;
       const offset = Timer.getCircumference() * progress;
       timerRing.style.strokeDashoffset = offset;
-    }, onComplete);
+    }, () => { Sound.phaseEnd(); onComplete(); });
   }
 
   function startRestTimer(seconds, onComplete) {
@@ -429,7 +488,8 @@
       timerDisplay.textContent = remaining;
       const offset = Timer.getCircumference() * progress;
       timerRing.style.strokeDashoffset = offset;
-    }, onComplete);
+      if (remaining > 0 && remaining <= 3) Sound.tick();
+    }, () => { Sound.phaseEnd(); onComplete(); });
   }
 
   // ===================== PROGRESS =====================
@@ -562,7 +622,11 @@
         if (s.painLevel > 5) painClass = 'pain-high';
         else if (s.painLevel > 3) painClass = 'pain-med';
 
-        const variant = s.variant ? ` (${s.variant === 'straight' ? 'Jambe tendue' : 'Genou fléchi'})` : '';
+        let variant = '';
+        if (s.variant) {
+          const v = ex && ex.variants ? ex.variants.find(vv => vv.id === s.variant) : null;
+          variant = ` (${v ? v.label : s.variant})`;
+        }
         const time = new Date(s.completedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
         entry.innerHTML = `
@@ -584,6 +648,12 @@
     // Start date
     settingsStartDate.value = Storage.getStartDate();
 
+    // Sound toggle
+    settingsSound.checked = Sound.isEnabled();
+
+    // Exercise library
+    renderExercisesManager();
+
     // Days list
     settingsDaysList.innerHTML = '';
     Exercises.dayPlan.forEach(dp => {
@@ -593,7 +663,10 @@
       const autoDone = completedSessions.length >= dp.maxSessions;
       const isDone = manualDone || autoDone;
 
-      const exerciseNames = dp.exercises.map(id => Exercises.getById(id).name).join(', ');
+      const exerciseNames = dp.exercises.map(id => {
+        const ex = Exercises.getById(id);
+        return ex ? ex.name : id;
+      }).join(', ');
 
       const row = document.createElement('div');
       row.className = 'settings-day-row' + (isDone ? ' done' : '');
@@ -660,6 +733,193 @@
     Storage.setStartDate(val);
     renderSettings();
     renderDashboard();
+  });
+
+  settingsSound.addEventListener('change', () => {
+    Sound.setEnabled(settingsSound.checked);
+  });
+
+  // ===================== EXERCISE LIBRARY (Settings) =====================
+  const TIMER_TYPE_LABELS = {
+    hold: 'maintien chronométré',
+    descent: 'descente chronométrée',
+    manual: 'comptage manuel'
+  };
+
+  function renderExercisesManager() {
+    settingsExList.innerHTML = '';
+    Exercises.getAll().forEach(ex => {
+      const row = document.createElement('div');
+      row.className = 'settings-ex-row';
+      row.innerHTML = `
+        <div class="settings-ex-info">
+          <span class="ex-tag ${ex.tag}">${ex.tagLabel}</span>
+          <div>
+            <div class="settings-ex-name">${ex.name}</div>
+            <div class="settings-ex-detail">${ex.dosageText} — ${TIMER_TYPE_LABELS[ex.timerType] || ex.timerType}</div>
+          </div>
+        </div>
+        <button class="btn btn-small btn-secondary">Modifier</button>
+      `;
+      row.querySelector('button').addEventListener('click', () => openEditor(ex.id));
+      settingsExList.appendChild(row);
+    });
+  }
+
+  btnNewExercise.addEventListener('click', () => openEditor(null));
+
+  btnExportExercises.addEventListener('click', () => {
+    const blob = new Blob([Exercises.exportJSON()], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `tendons-exercices-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  });
+
+  btnImportExercises.addEventListener('click', () => importExercisesFile.click());
+
+  importExercisesFile.addEventListener('change', () => {
+    const file = importExercisesFile.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const count = Exercises.importJSON(reader.result);
+        alert(`${count} exercice(s) importé(s).`);
+        renderSettings();
+        renderDashboard();
+      } catch (e) {
+        alert('Import impossible : ' + e.message);
+      }
+      importExercisesFile.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  btnResetExercises.addEventListener('click', () => {
+    if (confirm('Restaurer les exercices par défaut ? Les exercices personnalisés et tes modifications seront supprimés.')) {
+      Exercises.resetToDefaults();
+      renderSettings();
+      renderDashboard();
+    }
+  });
+
+  // ===================== EXERCISE EDITOR =====================
+  let editingId = null;
+
+  function slugify(text) {
+    return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'variante';
+  }
+
+  function tagDefaultLabel(tag) {
+    return { iso: 'Antalgique', exc: 'Traitement', mob: 'Complément' }[tag] || 'Exercice';
+  }
+
+  function updateEditorTimerFields() {
+    const t = edTimerType.value;
+    edFieldHold.style.display = t === 'hold' ? '' : 'none';
+    edFieldDescent.style.display = t === 'descent' ? '' : 'none';
+  }
+  edTimerType.addEventListener('change', updateEditorTimerFields);
+
+  function openEditor(id) {
+    editingId = id || null;
+    const ex = id ? Exercises.getById(id) : null;
+
+    editorTitle.textContent = ex ? `Modifier — ${ex.name}` : 'Nouvel exercice';
+    edName.value = ex ? ex.name : '';
+    edSubtitle.value = ex ? ex.subtitle : '';
+    edDescription.value = ex ? ex.description : '';
+    edTag.value = ex ? ex.tag : 'mob';
+    edTagLabel.value = ex ? ex.tagLabel : '';
+    edTimerType.value = ex ? ex.timerType : 'hold';
+    edSets.value = ex ? ex.sets : 1;
+    edReps.value = ex ? ex.reps : 10;
+    edHold.value = (ex && ex.holdSeconds) ? ex.holdSeconds : 30;
+    edDescent.value = (ex && ex.descentSeconds) ? ex.descentSeconds : 5;
+    edRest.value = ex ? ex.restSeconds : 30;
+    edFrequency.value = ex ? ex.frequencyText : '1x / jour';
+    edVariants.value = (ex && ex.variants) ? ex.variants.map(v => v.label).join(', ') : '';
+
+    editorError.style.display = 'none';
+    // Exercises used by the day plan can't be deleted, only edited
+    btnEditorDelete.style.display = (id && !Exercises.isInDayPlan(id)) ? '' : 'none';
+    updateEditorTimerFields();
+    editorOverlay.style.display = 'flex';
+  }
+
+  function closeEditor() {
+    editorOverlay.style.display = 'none';
+    editingId = null;
+  }
+
+  function showEditorError(msg) {
+    editorError.textContent = msg;
+    editorError.style.display = 'block';
+  }
+
+  btnEditorCancel.addEventListener('click', closeEditor);
+  editorOverlay.addEventListener('click', (e) => {
+    if (e.target === editorOverlay) closeEditor();
+  });
+
+  btnEditorSave.addEventListener('click', () => {
+    const name = edName.value.trim();
+    if (!name) {
+      showEditorError('Le nom est obligatoire.');
+      return;
+    }
+
+    const existing = editingId ? Exercises.getById(editingId) : null;
+
+    // Build variants; keep existing ids when labels match so history stays readable
+    let variants = null;
+    const labels = edVariants.value.split(',').map(s => s.trim()).filter(Boolean);
+    if (labels.length) {
+      variants = labels.map(label => {
+        const prev = (existing && existing.variants)
+          ? existing.variants.find(v => v.label.toLowerCase() === label.toLowerCase())
+          : null;
+        return { id: prev ? prev.id : slugify(label), label };
+      });
+    }
+
+    const saved = Exercises.save({
+      id: editingId || Exercises.createId(name),
+      name,
+      subtitle: edSubtitle.value.trim(),
+      description: edDescription.value.trim(),
+      tag: edTag.value,
+      tagLabel: edTagLabel.value.trim() || tagDefaultLabel(edTag.value),
+      timerType: edTimerType.value,
+      sets: edSets.value,
+      reps: edReps.value,
+      holdSeconds: edHold.value,
+      descentSeconds: edDescent.value,
+      restSeconds: edRest.value,
+      frequencyText: edFrequency.value.trim() || '1x / jour',
+      variants
+    });
+
+    if (!saved) {
+      showEditorError("Impossible d'enregistrer cet exercice. Vérifie les champs.");
+      return;
+    }
+    closeEditor();
+    renderSettings();
+    renderDashboard();
+  });
+
+  btnEditorDelete.addEventListener('click', () => {
+    if (!editingId) return;
+    if (!confirm('Supprimer cet exercice ?')) return;
+    Exercises.remove(editingId);
+    closeEditor();
+    renderSettings();
   });
 
   // ===================== RESET =====================
