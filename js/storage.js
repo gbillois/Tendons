@@ -1,32 +1,101 @@
 /**
- * storage.js — Local storage abstraction for the Tendons app.
+ * storage.js — Progress tracking, scoped per training program.
+ *
+ * Each program keeps its own start date, session log and day state, so loading
+ * another program never mixes histories.
  */
 const Storage = (() => {
-  const KEY = 'tendons_data';
+  const KEY = 'tendons_progress';
+  const LEGACY_KEY = 'tendons_data';
+  const LEGACY_PROGRAM_ID = 'tendinopathie';
 
-  function getDefault() {
+  function todayStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function emptyProgress() {
     return {
-      startDate: new Date().toISOString().slice(0, 10),
-      sessions: [],          // { exerciseId, variant, painLevel, date, sessionId, completedAt }
+      startDate: todayStr(),
+      sessions: [],            // { exerciseId, variant, rating, date, sessionId, completedAt }
       completedSessionIds: [], // IDs of fully validated sessions (all exercises done)
-      inProgressSession: null  // { sessionId, date, day }
+      inProgressSession: null, // { sessionId, date, day }
+      manualDone: []           // day numbers ticked by hand
     };
   }
 
-  function load() {
+  /** First run: adopt the pre-programs data as the tendinopathy program's progress. */
+  function migrateLegacy() {
+    const store = { byProgram: {} };
+    try {
+      const raw = localStorage.getItem(LEGACY_KEY);
+      if (raw) {
+        const legacy = JSON.parse(raw);
+        store.byProgram[LEGACY_PROGRAM_ID] = {
+          ...emptyProgress(),
+          ...legacy,
+          sessions: Array.isArray(legacy.sessions) ? legacy.sessions : [],
+          completedSessionIds: Array.isArray(legacy.completedSessionIds) ? legacy.completedSessionIds : [],
+          manualDone: Array.isArray(legacy.manualDone) ? legacy.manualDone : []
+        };
+      }
+    } catch {
+      // unreadable legacy data → start clean
+    }
+    return store;
+  }
+
+  // Set when the legacy store had to be migrated, so it gets written back on startup.
+  let needsPersist = false;
+
+  function loadStore() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (!raw) return getDefault();
-      return JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.byProgram === 'object' && parsed.byProgram) return parsed;
+      }
     } catch {
-      return getDefault();
+      // corrupted storage → start clean
     }
+    needsPersist = true;
+    return migrateLegacy();
   }
 
-  function save(data) {
-    localStorage.setItem(KEY, JSON.stringify(data));
+  let store = loadStore();
+
+  function persistStore() {
+    localStorage.setItem(KEY, JSON.stringify(store));
   }
 
+  // Migrated data is saved right away, so the legacy record is only read once.
+  if (needsPersist) persistStore();
+
+  function currentProgramId() {
+    return Programs.getActiveId();
+  }
+
+  /** Progress record for a program, created on first access. */
+  function load(programId) {
+    const id = programId || currentProgramId();
+    if (!store.byProgram[id]) {
+      store.byProgram[id] = emptyProgress();
+      persistStore();
+    }
+    return store.byProgram[id];
+  }
+
+  function save(data, programId) {
+    store.byProgram[programId || currentProgramId()] = data;
+    persistStore();
+  }
+
+  /** Number of days in the active program — the schedule is no longer fixed at 5. */
+  function dayCount() {
+    const program = Programs.getActive();
+    return program && program.days.length ? program.days.length : 1;
+  }
+
+  // ===================== SESSIONS =====================
   function addSession(session) {
     const data = load();
     data.sessions.push({
@@ -41,19 +110,32 @@ const Storage = (() => {
     return load().sessions;
   }
 
+  // ===================== SCHEDULE =====================
   function getStartDate() {
-    const data = load();
-    return data.startDate;
+    return load().startDate;
   }
 
-  /** Returns 1-based day number (capped at 5). */
+  function setStartDate(dateStr) {
+    const data = load();
+    data.startDate = dateStr;
+    save(data);
+  }
+
+  /** Returns the 1-based day number for today, capped at the program length. */
   function getCurrentDay() {
     const start = new Date(getStartDate());
     const now = new Date();
     start.setHours(0, 0, 0, 0);
     now.setHours(0, 0, 0, 0);
     const diff = Math.floor((now - start) / 86400000);
-    return Math.min(Math.max(diff + 1, 1), 5);
+    return Math.min(Math.max(diff + 1, 1), dayCount());
+  }
+
+  /** Returns the date string for a given day number. */
+  function getDateForDay(dayNum) {
+    const start = new Date(getStartDate());
+    start.setDate(start.getDate() + dayNum - 1);
+    return start.toISOString().slice(0, 10);
   }
 
   /** Returns validated (complete) session count for a given date. */
@@ -67,13 +149,6 @@ const Storage = (() => {
         .map(s => s.sessionId)
     );
     return sessionIdsOnDate.size;
-  }
-
-  /** Returns the date string for a given day number. */
-  function getDateForDay(dayNum) {
-    const start = new Date(getStartDate());
-    start.setDate(start.getDate() + dayNum - 1);
-    return start.toISOString().slice(0, 10);
   }
 
   /** Returns or creates an in-progress session for the given date+day. */
@@ -131,6 +206,7 @@ const Storage = (() => {
     return [...map.entries()].map(([id, exercises]) => ({ sessionId: id, exercises }));
   }
 
+  // ===================== DAY STATE =====================
   function setDayDone(dayNum, done) {
     const data = load();
     if (!data.manualDone) data.manualDone = [];
@@ -146,20 +222,29 @@ const Storage = (() => {
     return (load().manualDone || []).includes(dayNum);
   }
 
-  function setStartDate(dateStr) {
-    const data = load();
-    data.startDate = dateStr;
-    save(data);
+  // ===================== RESET =====================
+  /** Clears the active program's progress; other programs keep theirs. */
+  function reset(programId) {
+    const id = programId || currentProgramId();
+    store.byProgram[id] = emptyProgress();
+    persistStore();
   }
 
-  function reset() {
-    localStorage.removeItem(KEY);
+  /** Drops the progress of a program that no longer exists. */
+  function dropProgram(programId) {
+    delete store.byProgram[programId];
+    persistStore();
+  }
+
+  function resetAll() {
+    store = { byProgram: {} };
+    persistStore();
   }
 
   return {
     load, save, addSession, getSessions, getStartDate, setStartDate,
-    getCurrentDay, getSessionCountForDate, getDateForDay,
-    setDayDone, isDayManuallyDone, reset,
+    getCurrentDay, getSessionCountForDate, getDateForDay, dayCount,
+    setDayDone, isDayManuallyDone, reset, resetAll, dropProgram,
     startOrGetSession, getInProgressSession, completeSession,
     deleteCompletedSession, getCompletedSessionsForDate
   };

@@ -6,42 +6,119 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Tendons - Suivi Kiné</title>
+  <title>My Own Workout</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div id="app">
     <!-- Header -->
     <header id="app-header">
-      <h1>Tendons</h1>
-      <p class="subtitle">Tendinopathie — Plan de récupération</p>
+      <h1>My Own Workout</h1>
+      <p class="subtitle" id="active-program-name"></p>
     </header>
 
     <!-- Navigation tabs -->
     <nav id="tabs">
+      <button class="tab" data-view="programs">Programmes</button>
       <button class="tab active" data-view="dashboard">Plan</button>
       <button class="tab" data-view="session">Séance</button>
       <button class="tab" data-view="history">Historique</button>
       <button class="tab" data-view="settings">Réglages</button>
     </nav>
 
-    <!-- ===================== DASHBOARD VIEW ===================== -->
-    <section id="view-dashboard" class="view active">
-      <div class="day-grid" id="day-grid"></div>
-
-      <div class="card rules-card">
-        <h3>Règles de sécurité</h3>
-        <ul>
-          <li>Douleur pendant exercice ≤ 3/10</li>
-          <li>Pas pire le lendemain matin</li>
-          <li>Si aggravation → réduire volume ou amplitude</li>
-        </ul>
+    <!-- ===================== PROGRAMS VIEW ===================== -->
+    <section id="view-programs" class="view">
+      <!-- Program list -->
+      <div id="programs-browser">
+        <h2>Programmes</h2>
+        <p class="settings-hint">Charge un programme pour le suivre, ou crée le tien.</p>
+        <div id="programs-list"></div>
+        <div class="settings-ex-actions">
+          <button id="btn-new-program" class="btn btn-primary btn-small">+ Nouveau programme</button>
+          <button id="btn-import-program" class="btn btn-secondary btn-small">Importer JSON</button>
+          <button id="btn-export-all-programs" class="btn btn-secondary btn-small">Exporter tout</button>
+          <button id="btn-reset-programs" class="btn btn-danger btn-small">Restaurer défauts</button>
+          <input type="file" id="import-program-file" accept=".json,application/json" style="display:none">
+        </div>
       </div>
 
-      <div class="card" id="running-card" style="display:none">
-        <h3>Reprise course</h3>
-        <p>Seulement si douleur faible et exercices bien tolérés.</p>
-        <p>10-15 min, allure lente, chaussures avec drop.</p>
+      <!-- Program editor -->
+      <div id="program-editor" style="display:none">
+        <button id="btn-back-programs" class="btn-back">← Programmes</button>
+        <h2 id="program-editor-title">Nouveau programme</h2>
+
+        <div class="card settings-section">
+          <h3>Informations</h3>
+          <div class="editor-field">
+            <label for="pe-name">Nom *</label>
+            <input type="text" id="pe-name" class="ed-input" placeholder="Ex : Renforcement haut du corps">
+          </div>
+          <div class="editor-field">
+            <label for="pe-description">Description</label>
+            <textarea id="pe-description" class="ed-input" rows="2" placeholder="Objectif du programme"></textarea>
+          </div>
+          <div class="editor-field">
+            <label for="pe-rules">Règles / consignes (une par ligne)</label>
+            <textarea id="pe-rules" class="ed-input" rows="3" placeholder="Ex : Douleur ≤ 3/10"></textarea>
+          </div>
+          <div class="editor-field">
+            <label for="pe-rating">Évaluation après chaque exercice</label>
+            <select id="pe-rating" class="ed-input">
+              <option value="pain">Douleur (0-10)</option>
+              <option value="rpe">Effort perçu — RPE (0-10)</option>
+              <option value="none">Aucune</option>
+            </select>
+          </div>
+          <label class="toggle-row">
+            <input type="checkbox" id="pe-manual-advance">
+            <span>Enchaînement manuel : chaque répétition et chaque repos attend « Suivant »</span>
+          </label>
+        </div>
+
+        <div class="card settings-section">
+          <h3>Exercices</h3>
+          <p class="settings-hint">Les exercices appartiennent à ce programme. Ajoute-les avant de composer les jours.</p>
+          <div id="pe-exercises-list"></div>
+          <div class="settings-ex-actions">
+            <button id="btn-pe-new-exercise" class="btn btn-primary btn-small">+ Nouvel exercice</button>
+          </div>
+        </div>
+
+        <div class="card settings-section">
+          <h3>Jours</h3>
+          <p class="settings-hint">Chaque jour choisit ses exercices et son nombre de séances.</p>
+          <div id="pe-days-list"></div>
+          <div class="settings-ex-actions">
+            <button id="btn-pe-add-day" class="btn btn-primary btn-small">+ Ajouter un jour</button>
+          </div>
+        </div>
+
+        <p id="pe-error" class="editor-error" style="display:none"></p>
+
+        <div class="editor-actions">
+          <button id="btn-pe-save" class="btn btn-primary">Enregistrer</button>
+          <button id="btn-pe-save-load" class="btn btn-success">Enregistrer et charger</button>
+          <button id="btn-pe-export" class="btn btn-secondary btn-small">Exporter</button>
+          <button id="btn-pe-delete" class="btn btn-danger btn-small" style="display:none">Supprimer</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== DASHBOARD VIEW ===================== -->
+    <section id="view-dashboard" class="view active">
+      <div class="card" id="program-summary"></div>
+
+      <div class="day-grid" id="day-grid"></div>
+
+      <div class="card rules-card" id="rules-card" style="display:none">
+        <h3>Règles</h3>
+        <ul id="rules-list"></ul>
+      </div>
+
+      <div class="card" id="day-note-card" style="display:none">
+        <h3 id="day-note-title"></h3>
+        <p id="day-note-text"></p>
       </div>
     </section>
 
@@ -98,12 +175,12 @@
           <button id="btn-done" class="btn btn-success" style="display:none">Terminer</button>
         </div>
 
-        <!-- Pain rating after exercise -->
-        <div id="pain-rating" style="display:none">
-          <h3>Niveau de douleur ressenti</h3>
-          <div class="pain-scale" id="pain-scale"></div>
-          <p id="pain-description" class="subtitle"></p>
-          <button id="btn-save-pain" class="btn btn-primary">Enregistrer</button>
+        <!-- Effort / pain rating after exercise -->
+        <div id="rating-panel" style="display:none">
+          <h3 id="rating-title"></h3>
+          <div class="pain-scale" id="rating-scale"></div>
+          <p id="rating-description" class="subtitle"></p>
+          <button id="btn-save-rating" class="btn btn-primary">Enregistrer</button>
         </div>
       </div>
     </section>
@@ -113,9 +190,9 @@
       <h2>Historique des séances</h2>
       <div id="history-list"></div>
       <div id="history-empty" class="card" style="display:none">
-        <p>Aucune séance enregistrée. Lance ta première séance !</p>
+        <p>Aucune séance enregistrée pour ce programme. Lance ta première séance !</p>
       </div>
-      <button id="btn-reset" class="btn btn-danger btn-small">Réinitialiser les données</button>
+      <button id="btn-reset" class="btn btn-danger btn-small">Réinitialiser ce programme</button>
     </section>
 
     <!-- ===================== SETTINGS VIEW ===================== -->
@@ -123,12 +200,21 @@
       <h2>Réglages</h2>
 
       <div class="card settings-section">
+        <h3>Programme actif</h3>
+        <div class="settings-row">
+          <select id="settings-program-select" class="ed-input"></select>
+          <button id="btn-edit-program" class="btn btn-secondary btn-small">Modifier</button>
+        </div>
+        <p class="settings-hint">Change de programme ici, ou depuis l'onglet « Programmes ».</p>
+      </div>
+
+      <div class="card settings-section">
         <h3>Date de début du programme</h3>
         <div class="settings-row">
           <input type="date" id="settings-start-date" class="date-input">
           <button id="btn-save-date" class="btn btn-primary btn-small">Enregistrer</button>
         </div>
-        <p class="settings-hint">Modifie si la date de début est incorrecte.</p>
+        <p class="settings-hint">Chaque programme a sa propre date de début.</p>
       </div>
 
       <div class="card settings-section">
@@ -141,16 +227,27 @@
       </div>
 
       <div class="card settings-section">
-        <h3>Exercices</h3>
-        <p class="settings-hint">Modifie les exercices existants ou crée les tiens. Les nouveaux exercices apparaissent dans la séance, section « Autres exercices ».</p>
-        <div id="settings-exercises-list"></div>
-        <div class="settings-ex-actions">
-          <button id="btn-new-exercise" class="btn btn-primary btn-small">+ Nouvel exercice</button>
-          <button id="btn-export-exercises" class="btn btn-secondary btn-small">Exporter JSON</button>
-          <button id="btn-import-exercises" class="btn btn-secondary btn-small">Importer JSON</button>
-          <button id="btn-reset-exercises" class="btn btn-danger btn-small">Restaurer défauts</button>
-          <input type="file" id="import-exercises-file" accept=".json,application/json" style="display:none">
+        <h3>Notifications</h3>
+        <label class="toggle-row">
+          <input type="checkbox" id="settings-notify">
+          <span>Activer les notifications du navigateur</span>
+        </label>
+        <p class="settings-hint">Utile sur ordinateur : tu es prévenu même si l'onglet est en arrière-plan.</p>
+
+        <div id="notify-level-block" style="display:none">
+          <div class="level-picker" id="notify-level-picker">
+            <button class="level-btn" data-level="exercise">
+              <span class="level-name">Exercice</span>
+              <span class="level-desc">Début et fin de chaque exercice, séance terminée</span>
+            </button>
+            <button class="level-btn" data-level="movement">
+              <span class="level-name">Mouvement</span>
+              <span class="level-desc">Chaque répétition, série, maintien, descente et repos</span>
+            </button>
+          </div>
+          <button id="btn-notify-test" class="btn btn-secondary btn-small">Tester une notification</button>
         </div>
+        <p class="settings-hint" id="notify-status"></p>
       </div>
 
       <div class="card settings-section">
@@ -180,15 +277,18 @@
 
         <div class="editor-row">
           <div class="editor-field">
-            <label for="ed-tag">Catégorie</label>
+            <label for="ed-tag">Couleur</label>
             <select id="ed-tag" class="ed-input">
-              <option value="iso">Bleu (antalgique)</option>
-              <option value="exc">Rouge (traitement)</option>
-              <option value="mob">Vert (complément)</option>
+              <option value="blue">Bleu</option>
+              <option value="red">Rouge</option>
+              <option value="green">Vert</option>
+              <option value="amber">Orange</option>
+              <option value="violet">Violet</option>
+              <option value="gray">Gris</option>
             </select>
           </div>
           <div class="editor-field">
-            <label for="ed-taglabel">Libellé catégorie</label>
+            <label for="ed-taglabel">Catégorie</label>
             <input type="text" id="ed-taglabel" class="ed-input" placeholder="Ex : Renforcement">
           </div>
         </div>
@@ -197,7 +297,7 @@
           <label for="ed-timertype">Type de mouvement</label>
           <select id="ed-timertype" class="ed-input">
             <option value="hold">Maintien chronométré</option>
-            <option value="descent">Descente lente chronométrée</option>
+            <option value="descent">Phase lente chronométrée</option>
             <option value="manual">Comptage manuel des répétitions</option>
           </select>
         </div>
@@ -219,7 +319,7 @@
             <input type="number" id="ed-hold" class="ed-input" min="1" max="3600" value="30">
           </div>
           <div class="editor-field" id="ed-field-descent">
-            <label for="ed-descent">Descente (s)</label>
+            <label for="ed-descent">Phase lente (s)</label>
             <input type="number" id="ed-descent" class="ed-input" min="1" max="3600" value="5">
           </div>
           <div class="editor-field">
@@ -228,10 +328,17 @@
           </div>
         </div>
 
-        <div class="editor-field">
-          <label for="ed-frequency">Fréquence</label>
-          <input type="text" id="ed-frequency" class="ed-input" placeholder="Ex : 1-2x / jour">
+        <div class="editor-row">
+          <div class="editor-field">
+            <label for="ed-load">Charge / matériel</label>
+            <input type="text" id="ed-load" class="ed-input" placeholder="Ex : 12 kg, élastique rouge">
+          </div>
+          <div class="editor-field">
+            <label for="ed-frequency">Fréquence</label>
+            <input type="text" id="ed-frequency" class="ed-input" placeholder="Ex : 1-2x / jour">
+          </div>
         </div>
+
         <div class="editor-field">
           <label for="ed-variants">Variantes (séparées par des virgules, optionnel)</label>
           <input type="text" id="ed-variants" class="ed-input" placeholder="Ex : Jambe tendue, Genou fléchi">
@@ -248,10 +355,12 @@
     </div>
   </div>
 
+  <script src="js/exercises.js"></script>
+  <script src="js/programs.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/sound.js"></script>
+  <script src="js/notify.js"></script>
   <script src="js/wakelock.js"></script>
-  <script src="js/exercises.js"></script>
   <script src="js/timer.js"></script>
   <script src="js/app.js"></script>
 </body>

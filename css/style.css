@@ -66,9 +66,10 @@ body {
   border: none;
   background: none;
   color: var(--text-dim);
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  padding: 10px;
+  padding: 10px 4px;
+  white-space: nowrap;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.2s;
@@ -195,9 +196,12 @@ body {
   padding: 3px 8px;
   border-radius: 4px;
 }
-.ex-tag.iso { background: #1e3a5f; color: #60a5fa; }
-.ex-tag.exc { background: #3b1f1f; color: #f87171; }
-.ex-tag.mob { background: #1a3329; color: #4ade80; }
+.ex-tag.blue,   .ex-tag.iso { background: #1e3a5f; color: #60a5fa; }
+.ex-tag.red,    .ex-tag.exc { background: #3b1f1f; color: #f87171; }
+.ex-tag.green,  .ex-tag.mob { background: #1a3329; color: #4ade80; }
+.ex-tag.amber  { background: #3d2f14; color: #fbbf24; }
+.ex-tag.violet { background: #2e2450; color: #a78bfa; }
+.ex-tag.gray   { background: #2a2e3a; color: #9aa0b0; }
 .exercise-card h3 { font-size: 1rem; margin-bottom: 4px; }
 .exercise-card p { font-size: 0.82rem; color: var(--text-dim); }
 .exercise-card .ex-dosage {
@@ -359,11 +363,11 @@ body {
 .btn-small { font-size: 0.8rem; padding: 8px 16px; }
 
 /* ========== PAIN RATING ========== */
-#pain-rating {
+#rating-panel {
   text-align: center;
   margin-top: 24px;
 }
-#pain-rating h3 {
+#rating-panel h3 {
   font-size: 1rem;
   margin-bottom: 16px;
 }
@@ -399,7 +403,7 @@ body {
 .pain-btn.red { border-color: #ef4444; }
 .pain-btn.red.selected { background: #ef4444; border-color: #ef4444; }
 
-#pain-description {
+#rating-description {
   min-height: 20px;
   margin-bottom: 12px;
 }
@@ -660,8 +664,8 @@ body {
   cursor: pointer;
 }
 
-/* ========== EXERCISES MANAGER (Settings) ========== */
-#settings-exercises-list {
+/* ========== EXERCISES MANAGER (program editor) ========== */
+#pe-exercises-list {
   margin-top: 12px;
   display: flex;
   flex-direction: column;
@@ -778,6 +782,209 @@ textarea.ed-input {
   margin-top: 8px;
 }
 
+/* ========== PROGRAMS ========== */
+#programs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.program-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.program-card.active {
+  border-color: var(--primary);
+}
+.program-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.program-card-head h3 {
+  font-size: 0.98rem;
+}
+.program-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--primary-dim);
+  color: #fff;
+  flex-shrink: 0;
+}
+.program-desc {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+.program-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.program-meta span {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  background: var(--surface2);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+.program-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.program-progress {
+  font-size: 0.8rem;
+  color: var(--primary);
+  margin-top: 8px;
+  font-weight: 600;
+}
+#program-summary h3 {
+  font-size: 1rem;
+}
+#view-programs h2,
+#program-editor h2 {
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+/* ========== PROGRAM EDITOR — DAYS ========== */
+#pe-days-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.pe-day {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pe-day-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pe-day-num {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.pe-day-move {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.btn-tiny {
+  padding: 6px 9px;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+.btn-tiny:disabled {
+  opacity: 0.35;
+}
+.pe-day-row {
+  display: flex;
+  gap: 10px;
+}
+.pe-day-sessions {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pe-day-sessions .ed-input {
+  width: 70px;
+}
+.pe-day-exercises {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pe-day-ex {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px 6px 8px;
+  cursor: pointer;
+}
+.pe-day-ex input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.pe-day-note summary {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.pe-day-note .ed-input {
+  margin-top: 8px;
+}
+
+/* ========== NOTIFICATION LEVELS ========== */
+.level-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+.level-btn {
+  text-align: left;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+}
+.level-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-dim);
+}
+.level-name {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.level-desc {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.level-btn.active .level-desc {
+  color: #dbe2ff;
+}
+
 /* ========== PICKER SECTION TITLE ========== */
 .picker-section-title {
   font-size: 0.85rem;
@@ -790,6 +997,7 @@ textarea.ed-input {
 /* ========== RESPONSIVE ========== */
 @media (max-width: 400px) {
   #app { padding: 0 10px 80px; }
+  .tab { font-size: 0.72rem; padding: 9px 2px; }
   .timer-circle { width: 150px; height: 150px; }
   #timer-display { font-size: 2.5rem; }
   .btn-large { padding: 14px 36px; font-size: 1rem; }
