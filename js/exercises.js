@@ -78,6 +78,10 @@ const ExerciseModel = (() => {
       timerType,
       hasTimer: timerType !== 'manual',
       variants,
+      // null = follow the program; true/false override it for this exercise only.
+      manualAdvance: raw.manualAdvance === true ? true
+                   : raw.manualAdvance === false ? false
+                   : null,
       loadText: String(raw.loadText || '').trim(),
       frequencyText: String(raw.frequencyText || '1x / jour')
     };

@@ -293,13 +293,23 @@
           </div>
         </div>
 
-        <div class="editor-field">
-          <label for="ed-timertype">Type de mouvement</label>
-          <select id="ed-timertype" class="ed-input">
-            <option value="hold">Maintien chronométré</option>
-            <option value="descent">Phase lente chronométrée</option>
-            <option value="manual">Comptage manuel des répétitions</option>
-          </select>
+        <div class="editor-row">
+          <div class="editor-field">
+            <label for="ed-timertype">Type de mouvement</label>
+            <select id="ed-timertype" class="ed-input">
+              <option value="hold">Maintien chronométré</option>
+              <option value="descent">Phase lente chronométrée</option>
+              <option value="manual">Comptage manuel des répétitions</option>
+            </select>
+          </div>
+          <div class="editor-field">
+            <label for="ed-advance">Enchaînement</label>
+            <select id="ed-advance" class="ed-input">
+              <option value="inherit">Suivre le programme</option>
+              <option value="auto">Automatique</option>
+              <option value="manual">Manuel (« Suivant »)</option>
+            </select>
+          </div>
         </div>
 
         <div class="editor-row">

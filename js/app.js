@@ -107,6 +107,7 @@
   const edTag = $('ed-tag');
   const edTagLabel = $('ed-taglabel');
   const edTimerType = $('ed-timertype');
+  const edAdvance = $('ed-advance');
   const edSets = $('ed-sets');
   const edReps = $('ed-reps');
   const edHold = $('ed-hold');
@@ -566,6 +567,9 @@
     edTag.value = ex ? ex.tag : 'blue';
     edTagLabel.value = ex ? ex.tagLabel : '';
     edTimerType.value = ex ? ex.timerType : 'hold';
+    edAdvance.value = (ex && ex.manualAdvance === true) ? 'manual'
+                    : (ex && ex.manualAdvance === false) ? 'auto'
+                    : 'inherit';
     edSets.value = ex ? ex.sets : 1;
     edReps.value = ex ? ex.reps : 10;
     edHold.value = (ex && ex.holdSeconds) ? ex.holdSeconds : 30;
@@ -626,6 +630,9 @@
       tag: edTag.value,
       tagLabel: edTagLabel.value.trim() || 'Exercice',
       timerType: edTimerType.value,
+      manualAdvance: edAdvance.value === 'manual' ? true
+                   : edAdvance.value === 'auto' ? false
+                   : null,
       sets: edSets.value,
       reps: edReps.value,
       holdSeconds: edHold.value,
@@ -931,8 +938,15 @@
   }
 
   // ===================== MANUAL ADVANCE =====================
-  /** Some programs (e.g. training during a meeting) never chain steps on their own. */
+  /**
+   * Some programs (e.g. training during a meeting) never chain steps on their own.
+   * An exercise can opt out, so a timed movement still flows without tapping.
+   */
   function manualAdvanceEnabled() {
+    if (currentExercise && currentExercise.manualAdvance !== null &&
+        currentExercise.manualAdvance !== undefined) {
+      return currentExercise.manualAdvance;
+    }
     const program = activeProgram();
     return !!(program && program.manualAdvance);
   }

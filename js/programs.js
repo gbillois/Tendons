@@ -183,12 +183,15 @@ const Programs = (() => {
             name: 'Curl biceps',
             tag: 'red',
             tagLabel: 'Renforcement',
-            subtitle: '4 min au total',
-            description: "Garde les <strong>coudes collés contre les côtés du corps</strong>. Les avant-bras commencent vers le bas. Plie uniquement les coudes pour faire remonter les haltères vers les épaules, puis redescends lentement. Évite de bouger le dos ou les épaules. Fais 15 à 20 répétitions, repose-toi, puis recommence plus tard. Si les mains sont sous le bureau, cela peut être quasiment invisible.",
-            reps: 18,
+            subtitle: '5 min au total',
+            description: "Garde les <strong>coudes collés contre les côtés du corps</strong>. Les avant-bras commencent vers le bas. Plie uniquement les coudes pour faire remonter les haltères vers les épaules, puis <strong>redescends lentement</strong> pendant le minuteur. Évite de bouger le dos ou les épaules. Si les mains sont sous le bureau, cela peut être quasiment invisible.",
+            reps: 15,
+            descentSeconds: 3,
             restSeconds: 60,
             sets: 2,
-            timerType: 'manual',
+            timerType: 'descent',
+            // Timed reps chain on their own: tapping once per curl is not workable.
+            manualAdvance: false,
             variants: null,
             loadText: 'Haltères 1,5 kg',
             frequencyText: 'À volonté'
@@ -199,11 +202,14 @@ const Programs = (() => {
             tag: 'green',
             tagLabel: 'Activation',
             subtitle: '3 min au total',
-            description: "Assieds-toi droit, sans t'appuyer fortement contre le dossier. Soulève légèrement un genou de quelques centimètres, repose le pied, puis fais la même chose avec l'autre. Le mouvement peut être très petit. Fais 10 à 15 répétitions <strong>par côté</strong>. Essaie de ne pas te balancer avec le haut du corps.",
+            description: "Assieds-toi droit, sans t'appuyer fortement contre le dossier. Soulève légèrement un genou de quelques centimètres et <strong>tiens-le en l'air</strong> pendant le minuteur, puis repose le pied. Le mouvement peut être très petit. Une série <strong>par côté</strong>. Essaie de ne pas te balancer avec le haut du corps.",
             reps: 12,
-            restSeconds: 30,
+            holdSeconds: 3,
+            restSeconds: 3,
             sets: 2,
-            timerType: 'manual',
+            timerType: 'hold',
+            // Timed holds chain on their own.
+            manualAdvance: false,
             variants: [
               { id: 'gauche', label: 'Genou gauche' },
               { id: 'droit', label: 'Genou droit' }
